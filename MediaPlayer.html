@@ -245,8 +245,8 @@
       createjs.Sound.registerSound(bubble.src, "bubble" + id);
 
       $("#bubbles")
-        .append('<div id="bubble' + id + '" class="bubble"></div>')
-        .append('<div id="playedBubble' + id + '" class="playedBubble"></div>');
+        .append('<div id="bubble' + id + '" class="bubble"></div>');
+//        .append('<div id="playedBubble' + id + '" class="playedBubble"></div>');
     });
   }
 
@@ -350,31 +350,40 @@
     });
 
     bubbles.forEach(function(bubble, id) {
-      $("#bubble" + id).click(function(event) {
-        if(bubble.instance && !bubble.instance.paused) {
-          return bubble.instance.paused = true;
+      $("#bubble" + id).click(handleBubbleClick(id));
+      $("#playingBubble" + id).click(handleBubbleClick(id));
+    })
+  }
+
+  function handleBubbleClick(id) {
+    return function(event) {
+      var bubble = bubbles[id];
+
+      if (bubble.instance && !bubble.instance.paused) {
+        return bubble.instance.paused = true;
+      }
+
+      $("#bubble" + id).addClass("active").addClass("playing");
+      $("#playedBubble" + id).addClass("active").addClass("playing");
+
+      bubbles.forEach(function(otherBubble) {
+        if (bubble !== otherBubble && bubble.instance) {
+          bubble.instance.paused = true;
+          $("#bubble" + otherBubble.id).removeClass("playing");
+          $("#playedBubble" + otherBubble.id).removeClass("playing");
         }
-
-        $(event.target).addClass("active").addClass("playing");
-
-        bubbles.forEach(function(otherBubble) {
-          if(bubble !== otherBubble && bubble.instance) {
-            bubble.instance.paused = true;
-            $("bubble" + otherBubble.id).removeClass("playing");
-            $("playingBubble" + otherBubble.id).removeClass("playing");
-          }
-        });
-
-          instance.paused = true;
-          instance.position = bubble.progress;
-          bubble.instance = createjs.Sound.play("bubble" + id);
-          bubble.instance.addEventListener("complete", function() {
-            instance.paused = false;
-            bubble.instance = undefined;
-            $(event.target).removeClass("active").removeClass("playing");
-          });
       });
-    });
+
+      instance.paused = true;
+      instance.position = bubble.progress;
+      bubble.instance = createjs.Sound.play("bubble" + id);
+      bubble.instance.addEventListener("complete", function() {
+        instance.paused = false;
+        bubble.instance = undefined;
+        $("#bubble" + id).removeClass("active").removeClass("playing");
+        $("#playedBubble" + id).removeClass("active").removeClass("playing");
+      });
+    }
   }
 
   var dragOffset;
