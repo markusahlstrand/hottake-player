@@ -32,42 +32,54 @@
             position: absolute;
         }
 
+        #bubbles {
+            left: 90px;
+        }
+
         div.bubble {
             top: 70px;
-            width: 55px;
-            height: 65px;
-            background-image: url('./art/bubble.png');
+            width: 0px;
+            height: 0px;
+            /*width: 55px;*/
+            /*height: 65px;*/
+            background-image: url('./art/play_bubble.png');
             background-size: 100% 100%;
+        }
+
+        div.bubble.playing {
+            background-image: url('./art/pause_bubble.png');
         }
 
         div.bubble { transition: all .2s ease-in-out; }
         div.bubble:hover { transform: scale(1.1); }
-        div.bubble.active { transform: scale(1.4); }
+        div.bubble.active { transform: scale(1.2); }
 
         .button {
             width: 64px;
             height: 64px;
-            top: 131px;
+            top: 141px;
         }
 
         #playBtn {
-            left: 794px;
+            left: 35px;
         }
 
         .playBtn {
-            background-image: url('./art/buttonPlay.png');
+            background-image: url('./art/playButton.png');
+            background-size: 100% 100%;
         }
 
         .playBtn:hover {
-            background-image: url('./art/buttonPlayHover.png');
+            background-image: url('./art/audio_play_hover.png');
         }
 
         .pauseBtn {
-            background-image: url('./art/buttonPause.png');
+            background-image: url('./art/audio_pause.png');
+            background-size: 100% 100%;
         }
 
         .pauseBtn:hover {
-            background-image: url('./art/buttonPauseHover.png');
+            background-image: url('./art/audio_pause_hover.png');
         }
 
         #stopBtn {
@@ -104,9 +116,9 @@
             width: 732px;
             height: 60px;
             top: 148px;
-            left: 40px;
+            left: 120px;
             color: #e5edf9;
-            background-image: url("./art/timeline.png");
+            background-image: url("./art/audio_wave_gray.png");
             background-size: auto 100%;
         }
 
@@ -114,17 +126,18 @@
             width: 732px;
             height: 60px;
             top: 148px;
-            left: 40px;
+            left: 120px;
             color: #e5edf9;
-            background-image: url("./art/playedTimeline.png");
+            background-image: url("./art/audio_wave_green.png");
             background-size: auto 100%;
         }
 
         #thumb {
             cursor: pointer;
-            background-image: url("./art/scrubberPlayhead.png");
-            width: 16px;
-            height: 16px;
+            color: black;
+            background-color: black;
+            width: 1px;
+            height: 70px;
             top: -5px;
         }
 
@@ -136,7 +149,7 @@
 <body onload="init()">
 
 <header class="SoundJS">
-    <h1>Media Player</h1>
+    <h1>Hot take</h1>
 
     <p>A Simple Media Player using SoundJS.</p>
 </header>
@@ -144,7 +157,6 @@
 <div id="content" class="content" style="position: absolute; height: auto">
     <div id="player">
         <div id="playBtn" class="button playBtn"></div>
-        <div id="stopBtn" class="button stopBtn"></div>
         <div id="labels">
             <label id="song">Show: <strong>99% Invisible</strong></label><br/>
             <label id="artist">Episode: <strong>213. Separation Anxiety</strong></label><br/><br/>
@@ -179,12 +191,19 @@
 <script type="text/javascript" id="editable">
     var bubbles = [
       {
-        progress: 10000,
-        src: './audio/Thunder1.mp3'
+        progress: 24700,
+        src: './audio/adore.mp3',
+        size: 0.6,
       },
       {
-        progress: 300000,
-        src: './audio/U-CabinBoy3.mp3'
+        progress: 36000,
+        src: './audio/wait.mp3',
+        size: 0.4,
+      },
+      {
+        progress: 49600,
+        src: './audio/live.mp3',
+        size: 1,
       },
     ];
 
@@ -202,14 +221,17 @@
 
     examples.showDistractor("content");
     var assetsPath = "./audio/";
-    var src = assetsPath + "213-Separation-Anxiety.mp3";
+    var src = assetsPath + "99pi.mp3";
 
     createjs.Sound.alternateExtensions = ["mp3"];	// add other extensions to try loading if the src file extension is not supported
     createjs.Sound.addEventListener("fileload", createjs.proxy(handleLoadComplete, this)); // add an event listener for when load is completed
     createjs.Sound.registerSound(src, "music");
     bubbles.forEach(function (bubble, id) {
       createjs.Sound.registerSound(bubble.src, "bubble" + id);
-      $("#bubbles").append('<div id="bubble' + id + '" class="bubble"></div>');
+
+      $("#bubbles")
+        .append('<div id="bubble' + id + '" class="bubble"></div>')
+        .append('<div id="playedBubble' + id + '" class="playedBubble"></div>');
     });
   }
 
@@ -228,12 +250,21 @@
     instance = createjs.Sound.play("music");
     instance.addEventListener("complete", function() {
       clearInterval(positionInterval);
-      $("#playBtn").removeClass("pauseBtn").addClass("playBtn")
+      $("#playBtn").removeClass("pauseBtn").addClass("playBtn");
       $("#stopBtn").attr("disabled", true);
     });
 
     bubbles.forEach(function(bubble, id) {
-      $("#bubble" + id).css("left", bubble.progress / instance.getDuration() * $("#track").width());
+      $("#bubble" + id)
+        .css("left", bubble.progress / instance.getDuration() * $("#track").width() + (1 - bubble.size) * 30)
+        .css("height", bubble.size * 90)
+        .css("width", bubble.size * 60)
+        .css("top", - bubble.size * 90 + 135);
+
+      $("#playedBubble" + id)
+        .css("left", bubble.progress / instance.getDuration() * $("#track").width() + (1 - bubble.size) * 30)
+        .css("height", bubble.size * 90)
+        .css("top", - bubble.size * 90 + 135);
     });
 
     $("#playPauseBtn").attr("disabled", false);
@@ -262,6 +293,17 @@
       $("#thumb").css("left", 0);
     });
     $("#stopBtn").attr("disabled", false);
+
+    $("#track").mousedown(function(event) {
+      var pos = (event.offsetX) / $("#track").width();
+      instance.position = (pos * instance.duration);
+    });
+
+    $("#playedTrack").mousedown(function(event) {
+      var pos = (event.offsetX) / $("#track").width();
+      instance.position = (pos * instance.duration);
+    });
+
 
     trackTime();
 
@@ -292,19 +334,27 @@
 
     bubbles.forEach(function(bubble, id) {
       $("#bubble" + id).click(function(event) {
-        var button = $(event.target).css("active", true);
+        if(bubble.instance && !bubble.instance.paused) {
+          return bubble.instance.paused = true;
+        }
 
-        if(!instance.paused) {
+        $(event.target).addClass("active").addClass("playing");
+
+        bubbles.forEach(function(otherBubble) {
+          if(bubble !== otherBubble && bubble.instance) {
+            bubble.instance.paused = true;
+            $("bubble" + otherBubble.id).removeClass("playing");
+          }
+        });
+
           instance.paused = true;
           instance.position = bubble.progress;
           bubble.instance = createjs.Sound.play("bubble" + id);
           bubble.instance.addEventListener("complete", function() {
             instance.paused = false;
+            bubble.instance = undefined;
+            $(event.target).removeClass("active").removeClass("playing");
           });
-        } else {
-          instance.paused = false;
-          bubble.instance.stop();
-        }
       });
     });
   }
@@ -322,9 +372,14 @@
       $("#playedTrack").css("width", position / instance.getDuration() * $("#track").width());
 
       bubbles.forEach(function(bubble, id) {
-        if(position < bubble.progress &&
-          bubble.progress < (position + interval)) {
-          return $("#bubble" + id).click();
+        if(bubble.instance) {
+          $("#playedBubble" + id)
+            .css("width", position / bubble.instance.getDuration() * $("#bubble" + id).width())
+        } else {
+          if(position < bubble.progress &&
+            bubble.progress < (position + interval)) {
+            return $("#bubble" + id).click();
+          }
         }
       });
     }, interval);

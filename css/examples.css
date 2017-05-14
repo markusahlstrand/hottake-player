@@ -12,11 +12,6 @@ h1 {
 	margin-bottom: 1rem;
 }
 
-h1:before {
-	content:"EASELJS ";
-	font-weight: bold;
-}
-
 header p {
 	margin: 0;
 	padding: 1em;
