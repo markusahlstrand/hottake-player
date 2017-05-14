@@ -46,6 +46,20 @@
             background-size: 100% 100%;
         }
 
+        div.playedBubble {
+            top: 70px;
+            width: 0px;
+            height: 0px;
+            /*width: 55px;*/
+            /*height: 65px;*/
+            background-image: url('./art/play_done_bubble.png');
+            background-size: auto 100%;
+        }
+
+        div.playedBubble.playing {
+            background-image: url('./art/pause_dark_bubble.png');
+        }
+
         div.bubble.playing {
             background-image: url('./art/pause_bubble.png');
         }
@@ -53,6 +67,7 @@
         div.bubble { transition: all .2s ease-in-out; }
         div.bubble:hover { transform: scale(1.1); }
         div.bubble.active { transform: scale(1.2); }
+        div.playedBubble.active { transform: scale(1.2); }
 
         .button {
             width: 64px;
@@ -149,9 +164,9 @@
 <body onload="init()">
 
 <header class="SoundJS">
-    <h1>Hot take</h1>
+    <h1>Hot takes</h1>
 
-    <p>A Simple Media Player using SoundJS.</p>
+    <p>Podcast audio commenting</p>
 </header>
 
 <div id="content" class="content" style="position: absolute; height: auto">
@@ -264,7 +279,8 @@
       $("#playedBubble" + id)
         .css("left", bubble.progress / instance.getDuration() * $("#track").width() + (1 - bubble.size) * 30)
         .css("height", bubble.size * 90)
-        .css("top", - bubble.size * 90 + 135);
+        .css("top", - bubble.size * 90 + 135)
+        .css("background-size", bubble.size * 60 + " 100%");
     });
 
     $("#playPauseBtn").attr("disabled", false);
@@ -274,6 +290,7 @@
         instance.play();
         $("#playBtn").removeClass("playBtn").addClass("pauseBtn");
         trackTime();
+
         return;
       } else {
         instance.paused ? instance.paused = false : instance.paused = true;
@@ -344,6 +361,7 @@
           if(bubble !== otherBubble && bubble.instance) {
             bubble.instance.paused = true;
             $("bubble" + otherBubble.id).removeClass("playing");
+            $("playingBubble" + otherBubble.id).removeClass("playing");
           }
         });
 
@@ -373,8 +391,10 @@
 
       bubbles.forEach(function(bubble, id) {
         if(bubble.instance) {
+          var bubblePosition = bubble.instance.getPosition();
+
           $("#playedBubble" + id)
-            .css("width", position / bubble.instance.getDuration() * $("#bubble" + id).width())
+            .css("width", bubble.instance.getPosition() / bubble.instance.getDuration() * $("#bubble" + id).width());
         } else {
           if(position < bubble.progress &&
             bubble.progress < (position + interval)) {
